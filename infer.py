@@ -34,9 +34,11 @@ def get_args_parser():
     parser.add_argument('--input_image',default='scratch')
     parser.add_argument('--max_seq_len', default=256, type=int)
     parser.add_argument('--batch_size', default=4, type=int, help='Batch size per GPU')
-    parser.add_argument('--encoder_model', default="hf-hub:imageomics/bioclip")
+    parser.add_argument('--encoder_model', default="bioclip",
+                        help='Vision encoder: clip | bioclip | bioclip2')
     parser.add_argument('--encoder_op_dim', default=768, type=int)
-    parser.add_argument('--decoder_model', default="openai-community/gpt2-medium")
+    parser.add_argument('--decoder_model', default="Qwen/Qwen3-1.7B-Base",
+                        help='Decoder LLM: Qwen/Qwen3-1.7B-Base | Qwen/Qwen3-1.7B | openai-community/gpt2-medium')
     parser.add_argument('--streeing_prompt', default="species identification and corresponding textual explanation task.")
     parser.add_argument('--load_path',default="scratch")
     parser.add_argument('--pick_random',default=0,type=int)

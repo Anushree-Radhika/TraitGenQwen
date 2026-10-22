@@ -5,6 +5,9 @@ import torch
 import random
 import logging
 import argparse
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
 
 import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel as DDP
@@ -33,14 +36,16 @@ def get_args_parser():
     parser.add_argument('--data_root', default='/home/paul/Paul/DATASETS/cub')
     parser.add_argument('--output_dir', default='output')
     parser.add_argument('--lr', default=1e-4, type=float)
-    parser.add_argument('--epochs', default=40, type=int)
+    parser.add_argument('--epochs', default=12, type=int)
     parser.add_argument('--optimizer', default='adam', choices=['sgd', 'adam', 'adamw'],
                         help='Optimizer (default: %(default)s)')
     parser.add_argument('--max_seq_len', default=256, type=int)
     parser.add_argument('--batch_size', default=4, type=int, help='Batch size per GPU')
-    parser.add_argument('--encoder_model', default="hf-hub:imageomics/bioclip")
+    parser.add_argument('--encoder_model', default="bioclip",
+                        help='Vision encoder: clip | bioclip | bioclip2  (or a raw open_clip hub string)')
     parser.add_argument('--encoder_op_dim', default=768, type=int)
-    parser.add_argument('--decoder_model', default="openai-community/gpt2-medium")
+    parser.add_argument('--decoder_model', default="Qwen/Qwen3-1.7B-Base",
+                        help='Decoder LLM: Qwen/Qwen3-1.7B-Base | Qwen/Qwen3-1.7B | openai-community/gpt2-medium')
     parser.add_argument('--streeing_prompt', default="species identification and corresponding textual explanation task.")
     parser.add_argument('--ann_dir', default='/kaggle/input/custom-ds', help='Path to custom JSON annotations')
     parser.add_argument('--validate_model',default=0,type=int)
@@ -119,6 +124,11 @@ def main(args):
         
         scaler = torch.cuda.amp.GradScaler()
         
+        # ── Track losses for the curve ──
+        epoch_list = []
+        train_losses = []
+        val_losses = []
+        
         cnter = 1
         for epoch in range(start_epoch,start_epoch + args.epochs):
             # Set epoch for sampler to ensure proper shuffling across GPUs
@@ -142,8 +152,29 @@ def main(args):
             val_loss, val_acc = validate(args, model, test_loader, device)
             if global_rank == 0:
                 logger.info(f"Epoch {epoch}: Validation Loss={val_loss:.4f} Validation Accuracy={val_acc:.4f}")
+            
+            # Record for loss curve
+            epoch_list.append(epoch)
+            train_losses.append(train_loss)
+            val_losses.append(val_loss)
                     
             cnter += 1
+        
+        # ── Plot loss curve (rank 0 only) ──
+        if global_rank == 0 and len(epoch_list) > 0:
+            fig, ax = plt.subplots(figsize=(10, 6))
+            ax.plot(epoch_list, train_losses, marker='o', linewidth=2, label='Train Loss')
+            ax.plot(epoch_list, val_losses, marker='s', linewidth=2, label='Val Loss')
+            ax.set_xlabel('Epoch', fontsize=13)
+            ax.set_ylabel('Loss', fontsize=13)
+            ax.set_title(f'Loss Curve — Encoder: {args.encoder_model}', fontsize=14)
+            ax.legend(fontsize=12)
+            ax.grid(True, alpha=0.3)
+            curve_path = os.path.join(args.output_dir, "loss_curve.png")
+            fig.savefig(curve_path, dpi=200, bbox_inches='tight')
+            plt.close(fig)
+            logger.info(f"Loss curve saved to {curve_path}")
+            print(f"[INFO] Loss curve saved to {curve_path}")
 
     cleanup_ddp()
 
