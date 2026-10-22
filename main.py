@@ -70,8 +70,10 @@ def main(args):
     vision_encoder = VisionEncoder(args)
     preprocess = vision_encoder.preprocess
 
-    train_dataset = CocoFormatDataset(args, ann_file=f'{args.ann_dir}/cub_train_split1.json', img_prefix=f'{args.data_root}/images', preprocess=preprocess)
-    test_dataset = CocoFormatDataset(args, ann_file=f'{args.ann_dir}/cub_test_split1.json', img_prefix=f'{args.data_root}/images', preprocess=preprocess)
+    img_dir = args.data_root if os.path.basename(args.data_root.rstrip('/\\')) == 'images' else os.path.join(args.data_root, 'images')
+
+    train_dataset = CocoFormatDataset(args, ann_file=f'{args.ann_dir}/cub_train_split1.json', img_prefix=img_dir, preprocess=preprocess)
+    test_dataset = CocoFormatDataset(args, ann_file=f'{args.ann_dir}/cub_test_split1.json', img_prefix=img_dir, preprocess=preprocess)
 
     # Wrap Datasets with DistributedSampler
     train_sampler = DistributedSampler(train_dataset, shuffle=True)
