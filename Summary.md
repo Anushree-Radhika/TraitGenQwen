@@ -19,17 +19,15 @@ training set. It can never invent a species that does not exist.
 
 ## 📑 Table of Contents
 
-1. [What this project does](#-what-this-project-does)
-2. [How the model works](#-how-the-model-works)
-3. [Project structure](#-project-structure)
-4. [What each file does](#-what-each-file-does)
-5. [Requirements](#-requirements)
-6. [Dataset format](#-dataset-format)
-7. [Configuration reference](#-configuration-reference)
-8. [Training details](#-training-details)
-9. [Outputs](#-outputs)
-10. [Loading the trained model](#-loading-the-trained-model)
-11. [Common tweaks](#-common-tweaks)
+1. [How the model works](#-how-the-model-works)
+2. [Project structure](#-project-structure)
+3. [What each file does](#-what-each-file-does)
+4. [Requirements](#-requirements)
+5. [Dataset format](#-dataset-format)
+6. [Training details](#-training-details)
+7. [Outputs](#-outputs)
+8. [Loading the trained model](#-loading-the-trained-model)
+9. [Common tweaks](#-common-tweaks)
 &nbsp;
 
 ---
@@ -335,6 +333,10 @@ not trained to copy the label from the description.
 ---
 
 &nbsp;
+
+
+## 🗂 Training Details
+
 ### Precision
 
 - Frozen base weights are stored in **fp16**.
