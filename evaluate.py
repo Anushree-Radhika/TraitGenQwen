@@ -1,4 +1,3 @@
-%%writefile /kaggle/working/evaluate.py
 import torch, torch.nn.functional as F
 from tqdm.auto import tqdm
 from dist_utils import dev, reduce, MAIN
