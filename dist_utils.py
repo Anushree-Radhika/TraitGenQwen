@@ -1,4 +1,3 @@
-%%writefile /kaggle/working/dist_utils.py
 import os, random
 import numpy as np, torch
 import torch.distributed as dist
