@@ -1,2 +1,0 @@
-python infer.py --load_path 'output/best_model_25.pth' --decoder_model "Qwen/Qwen3-1.7B-Base" --pick_random 20 --random_dir_path "/home/paul/DATASET/CUB_200_2011/images/001.Black_footed_Albatross"
-# python infer.py --input_image '/home/paul/DATASET/CUB_200_2011/images/002.Laysan_Albatross/Laysan_Albatross_0001_796111.jpg' --load_path 'output/best_model_25.pth' --decoder_model "Qwen/Qwen3-1.7B-Base"
