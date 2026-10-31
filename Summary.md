@@ -136,7 +136,7 @@ the prediction is counted as `-1` (wrong).
 ## 📁 Project structure
 
 ```
-/kaggle/working/
+/working-directory/
 │
 ├── config.py          ← paths, hyperparameters, constants
 ├── dist_utils.py      ← DDP setup, logging, barrier, reduce
@@ -146,10 +146,14 @@ the prediction is counted as `-1` (wrong).
 ├── evaluate.py        ← validation loss + generation accuracy
 ├── train.py           ← optimizer, training loop, checkpoints, plots
 ├── main.py            ← entry point that wires everything together
-│
+│_
+/data/
 ├── CUB_200_2011/      ← dataset (downloaded in setup cell)
 │   └── images/
-│
+│-test.json
+|-train.json
+-----
+/output/
 ├── checkpoints/       ← one file per epoch          (created at run time)
 ├── best_model/        ← best-by-test-accuracy model (created at run time)
 ├── history.json       ← metrics per epoch           (created at run time)
@@ -335,159 +339,6 @@ not trained to copy the label from the description.
 ---
 
 &nbsp;
-
-## 🚀 Quick start on Kaggle
-
-&nbsp;
-
-### 1️⃣ Set up the notebook
-
-- Open a Kaggle notebook.
-- **Accelerator:** `GPU T4 x2`.
-- **Internet:** On (needed to download CUB and model weights).
-- **Add data:** attach the dataset that contains `train.json` and `test.json`
-  (`neurallogica/dataset` in the default config).
-
-&nbsp;
-
-### 2️⃣ Download the images and install packages
-
-```python
-!wget "https://data.caltech.edu/records/65de6-vp158/files/CUB_200_2011.tgz?download=1" -O /kaggle/working/CUB_200_2011.tgz
-!tar -xzf /kaggle/working/CUB_200_2011.tgz -C /kaggle/working/
-!pip install -q -U "transformers>=4.51.0" peft
-!pip install --upgrade "torchao>0.16.0"
-```
-
-&nbsp;
-
-### 3️⃣ Create the source files
-
-Run each module in its own cell. **`%%writefile` must be the very first line of the cell.**
-
-```
-%%writefile /kaggle/working/config.py
-...
-```
-
-Repeat for `dist_utils.py`, `data.py`, `tokens.py`, `model.py`, `evaluate.py`, `train.py`, and `main.py`.
-
-&nbsp;
-
-### 4️⃣ Launch training on both GPUs
-
-```python
-%cd /kaggle/working
-!torchrun --nproc_per_node=2 main.py
-```
-
-&nbsp;
-
-### 5️⃣ Watch the logs
-
-You should see something like:
-
-```
-GPUs visible: 2 | world_size=2
-[train.json] ... records | first record: {...}
-   usable=... missing_images=0
-classes=200 (in train: 200) train=... test=...
-trainable params: ...M / ...M (...%)
-epoch 1/12: 100%|████████| ...
-[ep 1] name_loss train=... test=... gap=... | desc_loss=... | head_acc=...
-...
-[ep 4] ... | train_acc=... test_acc=...  <-- new best
-```
-
-&nbsp;
-
----
-
-&nbsp;
-
-## ⚙️ Configuration reference
-
-All of these live in `CFG` inside `config.py`.
-
-&nbsp;
-
-### Models
-
-| Key | Default | Notes |
-|-----|---------|-------|
-| `clip` | `openai/clip-vit-base-patch16` | `openai/clip-vit-large-patch14` is stronger but needs more memory. |
-| `llm` | `Qwen/Qwen3-1.7B` | `Qwen/Qwen3-4B` gives more capacity. Use `batch_size=8` with it. |
-
-&nbsp;
-
-### Data keys
-
-| Key | Default | Notes |
-|-----|---------|-------|
-| `img_key` | `imagePath` | JSON key holding the image path. |
-| `desc_key` | `gt` | JSON key holding the description. |
-| `workers` | `2` | Dataloader workers per GPU. |
-| `eval_train_subset` | `2000` | How many training images are used for the train-accuracy estimate. |
-
-&nbsp;
-
-### Schedule and batching
-
-| Key | Default | Notes |
-|-----|---------|-------|
-| `epochs` | `12` | Total epochs. |
-| `eval_every` | `4` | Run slow generation accuracy every N epochs. |
-| `batch_size` | `16` | **Per GPU.** |
-| `grad_accum` | `1` | Effective batch = `batch_size × 2 GPUs × grad_accum` = **32** by default. |
-| `warmup_frac` | `0.05` | Fraction of steps used for LR warmup. |
-| `grad_clip` | `1.0` | Gradient-norm clipping. |
-| `weight_decay` | `0.01` | AdamW weight decay. |
-| `seed` | `42` | Each rank uses `seed + rank`. |
-
-&nbsp;
-
-### Learning rates (three groups)
-
-| Key | Default | Applies to |
-|-----|---------|-----------|
-| `lr_clip_lora` | `1e-4` | CLIP LoRA weights |
-| `lr_llm_lora` | `2e-4` | Qwen3 LoRA weights |
-| `lr_proj` | `1e-3` | Projector and aux head |
-
-&nbsp;
-
-### Loss weights
-
-| Key | Default | Notes |
-|-----|---------|-------|
-| `name_weight` | `1.0` | Main objective. |
-| `desc_weight` | `0.15` | Set to `0` to disable the description loss entirely. |
-| `aux_weight` | `0.5` | Weight for the aux classification head. |
-| `label_smoothing` | `0.05` | Applied to all cross-entropy terms. |
-| `desc_max_tokens` | `64` | Descriptions are truncated to this many tokens. |
-
-&nbsp;
-
-### LoRA
-
-| Key | Default | Notes |
-|-----|---------|-------|
-| `lora_r_clip` | `16` | Rank for CLIP. |
-| `lora_r_llm` | `32` | Rank for Qwen3. |
-| `lora_alpha_mult` | `2` | `alpha = rank × this`. |
-| `lora_dropout` | `0.1` | |
-| `grad_ckpt` | `True` | Gradient checkpointing, trades speed for memory. |
-
-&nbsp;
-
----
-
-&nbsp;
-
-## 🏋️ Training details
-
-&nbsp;
-
 ### Precision
 
 - Frozen base weights are stored in **fp16**.
@@ -608,77 +459,6 @@ model.eval()
 ---
 
 &nbsp;
-
-## 🩺 Troubleshooting
-
-&nbsp;
-
-**`CUDA out of memory`**
-- Lower `batch_size` (try 8), and raise `grad_accum` to keep the effective batch size.
-- Keep `grad_ckpt=True`.
-- Use the smaller CLIP (`base-patch16`) and Qwen3-1.7B.
-
-&nbsp;
-
-**`IMAGES_DIR not found`**
-- The download or extraction cell did not finish. Check that `/kaggle/working/CUB_200_2011/images` exists.
-
-&nbsp;
-
-**`No images resolved - check IMAGES_DIR and img_key`**
-- The JSON key for the image path does not match. Open one record in the printed `first record:` line and set `img_key` in `config.py` to the correct key.
-
-&nbsp;
-
-**Lots of `missing_images`**
-- Image paths in the JSON do not match the folder layout. The loader tries several fallbacks, but if none work you may need to adjust `resolve(...)` in `data.py`.
-
-&nbsp;
-
-**`ModuleNotFoundError` for one of the project files**
-- Make sure you ran `%cd /kaggle/working` before `torchrun`, and that every `%writefile` cell actually ran.
-
-&nbsp;
-
-**`%%writefile` writes an empty file or fails**
-- `%%writefile` must be the **first line** of the cell, with nothing above it, not even a comment.
-
-&nbsp;
-
-**Strange import behaviour with `evaluate`**
-- `evaluate.py` shares its name with the Hugging Face `evaluate` package. Locally it takes priority, but if you hit odd import errors, rename it to `evaluation.py` and update the import in `train.py`.
-
-&nbsp;
-
-**Only one GPU is used**
-- Make sure the notebook accelerator is **GPU T4 x2**, and that you launched with `torchrun --nproc_per_node=2`. Running `python main.py` directly uses a single process.
-
-&nbsp;
-
-**Training hangs at the start**
-- Usually a barrier mismatch or a failed weight download on rank 0. Check that internet is enabled and that rank 0's log shows no error.
-
-&nbsp;
-
-**Loss is `nan` early on**
-- The `GradScaler` normally recovers on its own. If it persists, lower the learning rates slightly.
-
-&nbsp;
-
----
-
-&nbsp;
-
-## 📝 Design notes
-
-- **No hidden globals.** Tokenizer state lives in `TextCodec`, dataset state lives in `DataBundle`, and both are passed explicitly. The only shared module-level values are `RANK`, `WORLD`, `LOCAL`, `MAIN` and `dev` in `dist_utils.py`.
-- **Constrained decoding means closed-set prediction.** The model can only name species that were in the training split. Classes that appear only in the test split are registered in `class_names` but are not in the trie.
-- **Why average-pool the patches?** It cuts the visual sequence from 197 to 50 tokens, which makes LLM training much cheaper with little accuracy cost for a coarse task like species ID.
-- **Why an auxiliary head?** It gives the vision encoder a direct classification gradient, which helps LoRA on CLIP converge faster than relying only on the text loss flowing back through the LLM.
-- **Description loss is deliberately light.** At weight `0.15` it nudges the visual features toward describable traits without competing with the name objective.
-
-&nbsp;
-
 ---
 
 &nbsp;
