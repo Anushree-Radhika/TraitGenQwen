@@ -1,4 +1,3 @@
-%%writefile /kaggle/working/main.py
 import os
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 import torch
