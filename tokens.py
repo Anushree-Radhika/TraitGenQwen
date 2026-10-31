@@ -1,4 +1,3 @@
-%%writefile /kaggle/working/tokens.py
 import torch
 from transformers import AutoTokenizer
 from config import CFG
@@ -18,6 +17,7 @@ class TextCodec:
         self.prompt = tok("Question: Which bird species is in this image?\nAnswer:",
                           return_tensors="pt", add_special_tokens=False).input_ids
         self.trie, self.lookup = {}, {}
+        
         for c in train_classes:                    # output is always a valid class name
             node = self.trie
             for t in self.name_key[c]: node = node.setdefault(t, {})
