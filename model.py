@@ -1,4 +1,3 @@
-%%writefile /kaggle/working/model.py
 import torch, torch.nn as nn, torch.nn.functional as F
 from transformers import CLIPVisionModel, AutoModelForCausalLM
 from peft import LoraConfig, get_peft_model
