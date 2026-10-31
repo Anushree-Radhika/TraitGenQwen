@@ -25,15 +25,11 @@ training set. It can never invent a species that does not exist.
 4. [What each file does](#-what-each-file-does)
 5. [Requirements](#-requirements)
 6. [Dataset format](#-dataset-format)
-7. [Quick start on Kaggle](#-quick-start-on-kaggle)
-8. [Configuration reference](#-configuration-reference)
-9. [Training details](#-training-details)
-10. [Outputs](#-outputs)
-11. [Loading the trained model](#-loading-the-trained-model)
-12. [Common tweaks](#-common-tweaks)
-13. [Troubleshooting](#-troubleshooting)
-14. [Design notes](#-design-notes)
-
+7. [Configuration reference](#-configuration-reference)
+8. [Training details](#-training-details)
+9. [Outputs](#-outputs)
+10. [Loading the trained model](#-loading-the-trained-model)
+11. [Common tweaks](#-common-tweaks)
 &nbsp;
 
 ---
